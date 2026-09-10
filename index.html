@@ -375,7 +375,7 @@ const DEF = { goal:null, learnedIds:[], sessions:[], tests:[] };
 let S = load();
 let saveErr = false;
 let view = S.goal ? "home" : "setup";
-let batch=[], ci=0, flipped=false;
+let batch=[], ci=0, flipped=false, learnMode="new";
 let tq=[], ti=0, score=0, picked=-1, testKind="t", showBackup=false, backupMsg="", confirmReset=false;
 
 function load(){ try{ const r=localStorage.getItem(KEY); return r?Object.assign({},DEF,JSON.parse(r)):Object.assign({},DEF);}catch(e){ return Object.assign({},DEF);} }
@@ -391,12 +391,20 @@ function startLearn(){
   const l=learned();
   batch = QUESTIONS.filter(q=>!l.has(q.id)).slice(0, S.goal);
   if(!batch.length) return;
-  ci=0; flipped=false; view="learn"; render();
+  learnMode="new"; ci=0; flipped=false; view="learn"; render();
+}
+function startReview(){
+  const ids=new Set(S.sessions.filter(s=>s.date===today()).flatMap(s=>s.learnedIds));
+  batch = QUESTIONS.filter(q=>ids.has(q.id));
+  if(!batch.length){ const l=learned(); batch = QUESTIONS.filter(q=>l.has(q.id)); }
+  if(!batch.length) return;
+  learnMode="review"; ci=0; flipped=false; view="learn"; render();
 }
 function flip(){ flipped=!flipped; render(); }
 function prevCard(){ if(ci>0){ ci--; flipped=false; render(); } }
 function nextCard(){
   if(ci < batch.length-1){ ci++; flipped=false; render(); }
+  else if(learnMode==="review"){ view="home"; render(); }
   else {
     const ids=batch.map(q=>q.id);
     S.learnedIds=[...new Set([...S.learnedIds,...ids])];
@@ -475,9 +483,8 @@ function render(){
       <div class="row"><span>Berlin-Fragen / Berlin questions</span><b>${berlin} / 10</b></div>
       ${last.map(t=>`<div class="row"><span>${t.kind==="r"?"Zufallstest":"Tagestest"} ${t.date}</span><b>${t.score} / ${t.total}</b></div>`).join("")}
       <div class="spacer"></div>
-      <button class="btn" onclick="startLearn()" ${doneToday()||l>=total?"disabled":""}>
-        ${doneToday() ? "Heute schon gelernt \u2713 / Done for today" : (l>=total ? "Alles gelernt \u2713 / All done" : `Heute lernen: ${Math.min(S.goal,total-l)} Fragen / Learn today's cards`)}
-      </button>
+      ${doneToday()||l>=total ? `<button class="btn" onclick="startReview()" ${l===0?"disabled":""}>Zur\u00fcck zu den Karten / Back to the cards</button>
+      <p class="sub" style="text-align:center;margin-top:10px;margin-bottom:0;">${l>=total?"Alles gelernt":"Heute schon gelernt"} \u2713 / ${l>=total?"All learned":"Done for today"}</p>` : `<button class="btn" onclick="startLearn()">Heute lernen: ${Math.min(S.goal,total-l)} Fragen / Learn today's cards</button>`}
       <button class="btn2" onclick="startTest('t')" ${S.sessions.some(s=>s.date===today())?"":"disabled"}>Tagestest: heutige Fragen / Today's test</button>
       <button class="btn2" onclick="startTest('r')" ${l===0?"disabled":""}>Zufallstest: ${Math.min(30,l)} aus allen Gelernten / Random review</button>
       <button class="link" onclick="goSetup()">Tagesziel \u00e4ndern / Change daily goal</button><br>
