@@ -376,7 +376,7 @@ let S = load();
 let saveErr = false;
 let view = S.goal ? "home" : "setup";
 let batch=[], ci=0, flipped=false;
-let tq=[], ti=0, score=0, picked=-1, testKind="t", showBackup=false, backupMsg="";
+let tq=[], ti=0, score=0, picked=-1, testKind="t", showBackup=false, backupMsg="", confirmReset=false;
 
 function load(){ try{ const r=localStorage.getItem(KEY); return r?Object.assign({},DEF,JSON.parse(r)):Object.assign({},DEF);}catch(e){ return Object.assign({},DEF);} }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); saveErr=false; }catch(e){ saveErr=true; } }
@@ -430,7 +430,7 @@ function nextQ(){
 }
 function goHome(){ view="home"; render(); }
 function goSetup(){ view="setup"; render(); }
-function toggleBackup(){ showBackup=!showBackup; backupMsg=""; render(); }
+function toggleBackup(){ showBackup=!showBackup; backupMsg=""; confirmReset=false; render(); }
 function copyCode(){
   const code=btoa(JSON.stringify(S));
   if(navigator.clipboard && navigator.clipboard.writeText){
@@ -446,6 +446,10 @@ function restore(){
   }catch(e){ backupMsg="Ung\u00fcltiger Code. / Invalid code."; render(); }
 }
 
+function resetAll(){
+  if(!confirmReset){ confirmReset=true; render(); return; }
+  S=Object.assign({},DEF); save(); confirmReset=false; showBackup=false; view="setup"; render();
+}
 function render(){
   const app=document.getElementById("app");
   if(view==="setup"){
@@ -487,6 +491,7 @@ function render(){
           <textarea id="restoreIn"></textarea>
           <button class="btn2" onclick="restore()">Wiederherstellen / Restore</button>
           ${backupMsg?`<p class="sub" style="margin-top:8px;">${backupMsg}</p>`:""}
+          <button class="btn2" style="margin-top:16px;border-color:#c00;color:#c00;" onclick="resetAll()">${confirmReset?"Wirklich alles zur\u00fccksetzen? / Really reset everything?":"Fortschritt zur\u00fccksetzen / Reset progress"}</button>
         </div>`:""}
     `;
     return;
