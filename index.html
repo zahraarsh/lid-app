@@ -394,6 +394,7 @@ function startLearn(){
   ci=0; flipped=false; view="learn"; render();
 }
 function flip(){ flipped=!flipped; render(); }
+function prevCard(){ if(ci>0){ ci--; flipped=false; render(); } }
 function nextCard(){
   if(ci < batch.length-1){ ci++; flipped=false; render(); }
   else {
@@ -514,7 +515,10 @@ function render(){
         </div>
       </div>
       <p class="hint">Tippen zum Umdrehen / Tap to flip</p>
-      <button class="btn" onclick="nextCard()" ${flipped?"":"disabled"}>${ci===batch.length-1?"Fertig \u2713 / Finish":"Weiter / Next"}</button>
+      <div style="display:flex;gap:10px;">
+        <button class="btn2" style="flex:1;margin-top:14px;" onclick="prevCard()" ${ci===0?"disabled":""}>&#8592; Zur\u00fcck / Back</button>
+        <button class="btn" style="flex:2;" onclick="nextCard()" ${flipped?"":"disabled"}>${ci===batch.length-1?"Fertig \u2713 / Finish":"Weiter / Next"}</button>
+      </div>
       <button class="link" onclick="goHome()">Abbrechen / Cancel</button>
     `;
     return;
